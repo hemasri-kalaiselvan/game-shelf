@@ -5,7 +5,7 @@
 **Tech:** HTML, CSS, JavaScript
 **Tools:** GitHub, GitHub Pages
 **AI Tools:** Claude
-**Live:** https://hemasri-kalaiselvan.github.io/game-shelf/
+
 
 ## About
 
