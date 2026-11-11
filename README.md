@@ -1,38 +1,62 @@
 # Game Shelf
 
-Main page (`index.html`) lists every game. Each game lives in `games/<folder>/index.html`.
+> A live collection of 20 small browser games on one page — pick a game, play it on your phone or computer, and your best scores are saved on your device.
 
-## Games (20)
+**Tech:** HTML, CSS, JavaScript
+**Tools:** GitHub, GitHub Pages
+**AI Tools:** Claude
+**Live:** https://<username>.github.io/<repo>/
 
-| # | Game | Description | Folder |
-|---|------|-------------|--------|
-| 1 | 🌊 Tidepool Merge | Slide and merge tiles up to 2048. | `games/tidepool-merge/` |
-| 2 | 🐍 Reef Snake | Steer, eat, grow. Don't crash. | `games/reef-snake/` |
-| 3 | 🐚 Shell Match | Flip cards and find the pairs. | `games/shell-match/` |
-| 4 | 🫧 Bubble Pop | Pop bubbles fast. 30 seconds. | `games/bubble-pop/` |
-| 5 | ❌ Tide Tac Toe | Beat the computer. Easy or hard. | `games/tide-tac-toe/` |
-| 6 | 🔤 Word Reef | Guess the 5-letter word in 6 tries. | `games/word-reef/` |
-| 7 | 🐟 Fin Flap | Tap to swim through the coral gaps. | `games/fin-flap/` |
-| 8 | 🦔 Urchin Sweep | Minesweeper. Find the safe tiles. | `games/urchin-sweep/` |
-| 9 | 🔴 Drop Four | Connect four. CPU or 2 players. | `games/drop-four/` |
-| 10 | 🔔 Echo Pearls | Watch the pattern, then repeat it. | `games/echo-pearls/` |
-| 11 | 🧩 Drift Puzzle | Slide tiles into order. 3x3 or 4x4. | `games/drift-puzzle/` |
-| 12 | 🐋 Ocean Quiz | 10 questions about the sea. | `games/ocean-quiz/` |
-| 13 | 🦀 Crab Whack | Whack the crabs, spare the jellyfish. | `games/crab-whack/` |
-| 14 | ⚓ Sea Hangman | Guess the sea word letter by letter. | `games/sea-hangman/` |
-| 15 | 🔢 Reef Sudoku | Classic 9x9 with unique puzzles. | `games/reef-sudoku/` |
-| 16 | ⬜ Dots and Boxes | 2 players. Close boxes, win turns. | `games/dots-and-boxes/` |
-| 17 | 🌀 Reef Maze | Slide through mazes that keep growing. | `games/reef-maze/` |
-| 18 | 🃏 Reef Solitaire | Klondike. Tap a card, tap a spot. | `games/reef-solitaire/` |
-| 19 | 🚢 Fleet Battle | 2-player Battleship, one phone. | `games/fleet-battle/` |
-| 20 | 🏓 Tide Pong | Pong. vs CPU or 2 players. | `games/tide-pong/` |
+## About
+
+A live web page that works as a shelf of small games — puzzles, arcade games, board games and word games. Open the main page, tap a game card, and play. Games work with touch (swipe and tap) and with the keyboard. Best scores are saved in your browser, so there is no sign-up and no server.
+
+At its core it is a **static website**. Each game is one self-contained `index.html` file in its own folder, and the main page (`index.html`) lists them as cards. No framework, no build step, no backend to run.
+
+## Games
+
+| Game | Type | Folder |
+|---|---|---|
+| Tidepool Merge | Tile-merge puzzle (2048 style) | `tidepool-merge` |
+| Reef Snake | Arcade | `reef-snake` |
+| Shell Match | Memory cards | `shell-match` |
+| Bubble Pop | 30-second reflex | `bubble-pop` |
+| Tide Tac Toe | Vs computer, easy or hard | `tide-tac-toe` |
+| Word Reef | 5-letter word guess | `word-reef` |
+| Fin Flap | Tap-to-fly arcade | `fin-flap` |
+| Urchin Sweep | Minesweeper | `urchin-sweep` |
+| Drop Four | Connect four, CPU or 2 players | `drop-four` |
+| Echo Pearls | Simon-style memory | `echo-pearls` |
+| Drift Puzzle | Sliding tiles, 3×3 or 4×4 | `drift-puzzle` |
+| Ocean Quiz | 10-question quiz | `ocean-quiz` |
+| Crab Whack | Whack-a-mole | `crab-whack` |
+| Sea Hangman | Word game | `sea-hangman` |
+| Reef Sudoku | 9×9 puzzle, easy or medium | `reef-sudoku` |
+| Dots and Boxes | 2 players | `dots-and-boxes` |
+| Reef Maze | Growing mazes | `reef-maze` |
+| Reef Solitaire | Klondike | `reef-solitaire` |
+| Fleet Battle | Battleship, 2 players | `fleet-battle` |
+| Tide Pong | Pong, CPU or 2 players | `tide-pong` |
+
+## Project structure
+
+```
+index.html              main page (lists all games)
+games/
+  <game-folder>/
+    index.html          one self-contained game
+README.md
+```
 
 ## Add a game
-1. Create `games/<folder>/index.html` (self-contained).
-2. Add one line to the `GAMES` list in `index.html`.
-3. Add a row to the table above.
-4. Commit and push.
 
-## Host on GitHub Pages
-Repo > Settings > Pages > Deploy from branch > `main` / root > Save.
-Site: `https://<username>.github.io/<repo>/`
+1. Create `games/<folder>/index.html` (HTML, CSS and JS in one file).
+2. Add one line to the `GAMES` list in the main `index.html`.
+3. Commit and push.
+
+## Deploy on GitHub Pages
+
+1. Upload the files to a GitHub repo, keeping the folder structure.
+2. Open **Settings → Pages**.
+3. Choose **Deploy from a branch**, then `main` and `/ (root)`, then save.
+4. The site goes live at `https://<username>.github.io/<repo>/`.
