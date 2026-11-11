@@ -1,1 +1,90 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tidepool Merge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--cell:#1f4a51;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e2a2f}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:none}
+main{width:100%;max-width:440px;padding:20px 16px 28px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:64px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+p.hint{color:var(--mute);font-size:14px;margin:0 0 14px}
+#board{position:relative;background:var(--board);border-radius:16px;padding:10px;aspect-ratio:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:10px}
+.cell{border-radius:10px;background:var(--cell);display:flex;align-items:center;justify-content:center;font:700 clamp(20px,7vw,32px) Georgia,serif;color:#0e2a2f}
+.cell.pop{animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.6)}to{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.cell.pop{animation:none}}
+#over{position:absolute;inset:0;border-radius:16px;background:rgba(14,42,47,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:700 26px Georgia,serif}
+#over.show{display:flex}
+button{font:600 16px inherit;font-family:inherit;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.row{display:flex;justify-content:center;margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header>
+<h1>Tidepool Merge</h1>
+<div class="scores"><div class="sc"><small>Score</small><b id="score">0</b></div><div class="sc"><small>Best</small><b id="best">0</b></div></div>
+</header>
+<p class="hint">Swipe to slide tiles. Equal tiles merge. Reach 2048.</p>
+<div id="board" aria-live="polite"><div id="over"><span id="msg">Game over</span><button id="again2">Play again</button></div></div>
+<div class="row"><button id="again">New game</button></div>
+</main>
+<script>
+const COLORS={0:'#1f4a51',2:'#d9efe6',4:'#bfe6d6',8:'#8fd6bf',16:'#5ec4ae',32:'#3fb0a6',64:'#f6d58a',128:'#f2b84b',256:'#ee9a3c',512:'#e57a3a',1024:'#d95d52',2048:'#c0407a'};
+const N=4;let g,score,best=0,won=false,fresh=new Set();
+try{best=+localStorage.getItem('tidepool-best')||0}catch(e){}
+const board=document.getElementById('board');
+const cells=[];
+for(let i=0;i<N*N;i++){const c=document.createElement('div');c.className='cell';board.insertBefore(c,document.getElementById('over'));cells.push(c)}
+function empty(){const e=[];g.forEach((v,i)=>{if(!v)e.push(i)});return e}
+function spawn(){const e=empty();if(!e.length)return;const i=e[Math.floor(Math.random()*e.length)];g[i]=Math.random()<.9?2:4;fresh.add(i)}
+function start(){g=Array(N*N).fill(0);score=0;won=false;fresh.clear();spawn();spawn();document.getElementById('over').classList.remove('show');draw()}
+function draw(){
+cells.forEach((c,i)=>{const v=g[i];c.textContent=v||'';c.style.background=COLORS[v]||COLORS[2048];c.style.color=v>=128?'#fff':'#0e2a2f';
+c.classList.remove('pop');if(fresh.has(i)){void c.offsetWidth;c.classList.add('pop')}});
+fresh.clear();
+document.getElementById('score').textContent=score;
+if(score>best){best=score;try{localStorage.setItem('tidepool-best',best)}catch(e){}}
+document.getElementById('best').textContent=best}
+function line(a){const t=a.filter(Boolean);const r=[];let gain=0;
+for(let i=0;i<t.length;i++){if(t[i]===t[i+1]){r.push(t[i]*2);gain+=t[i]*2;i++}else r.push(t[i])}
+while(r.length<N)r.push(0);return[r,gain]}
+function move(d){ // 0 left,1 up,2 right,3 down
+let moved=false;
+for(let k=0;k<N;k++){
+const idx=[];for(let j=0;j<N;j++){idx.push(d===0?k*N+j:d===2?k*N+(N-1-j):d===1?j*N+k:(N-1-j)*N+k)}
+const [r,gain]=line(idx.map(i=>g[i]));
+idx.forEach((i,j)=>{if(g[i]!==r[j]){moved=true;if(r[j])fresh.add(i)}g[i]=r[j]});score+=gain}
+if(!moved)return;
+spawn();draw();
+if(!won&&g.includes(2048)){won=true;show('You reached 2048!')}
+else if(!canMove())show('Game over')}
+function canMove(){if(empty().length)return true;
+for(let r=0;r<N;r++)for(let c=0;c<N;c++){const v=g[r*N+c];if(c<N-1&&v===g[r*N+c+1])return true;if(r<N-1&&v===g[(r+1)*N+c])return true}return false}
+function show(t){document.getElementById('msg').textContent=t;document.getElementById('over').classList.add('show')}
+addEventListener('keydown',e=>{const m={ArrowLeft:0,ArrowUp:1,ArrowRight:2,ArrowDown:3}[e.key];if(m!==undefined){e.preventDefault();move(m)}});
+let sx,sy;
+addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;
+if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;
+move(Math.abs(dx)>Math.abs(dy)?(dx<0?0:2):(dy<0?1:3))});
+document.getElementById('again').onclick=start;document.getElementById('again2').onclick=start;
+start();
+</script>
+</body>
+</html>
