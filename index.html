@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Game Shelf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--card:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 16px 40px}
+h1{font:700 34px/1.1 Georgia,"Times New Roman",serif;margin:0 0 6px;letter-spacing:-.5px}
+.sub{color:var(--mute);margin:0 0 24px}
+#list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+a.card{display:flex;flex-direction:column;gap:6px;background:var(--card);border-radius:16px;padding:18px;color:inherit;text-decoration:none;border-left:6px solid var(--c,var(--accent));min-height:130px}
+a.card:hover{transform:translateY(-2px)}
+a.card:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ic{font-size:30px}
+.t{font:700 20px Georgia,serif}
+.d{color:var(--mute);font-size:14px}
+.soon{border:2px dashed #2c5a61;border-left-width:2px;background:transparent;color:var(--mute);align-items:center;justify-content:center;text-align:center;cursor:default}
+@media (prefers-reduced-motion:reduce){a.card:hover{transform:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Game Shelf</h1>
+<p class="sub">Small games, one tap away.</p>
+<div id="list"></div>
+</main>
+<script>
+// ADD NEW GAMES HERE: one line per game. Put the game in games/<folder>/index.html
+const GAMES=[
+ {title:"Tidepool Merge",desc:"Slide and merge tiles up to 2048.",folder:"tidepool-merge",icon:"🌊",color:"#3fb0a6"},
+];
+const list=document.getElementById('list');
+GAMES.forEach(g=>{const a=document.createElement('a');a.className='card';a.href='games/'+g.folder+'/';a.style.setProperty('--c',g.color||'#f2b84b');
+a.innerHTML='<span class="ic"></span><span class="t"></span><span class="d"></span>';
+a.children[0].textContent=g.icon||'🎮';a.children[1].textContent=g.title;a.children[2].textContent=g.desc;list.appendChild(a)});
+const s=document.createElement('div');s.className='card soon';s.style.display='flex';s.textContent='More games coming';list.appendChild(s);
+</script>
+</body>
+</html>
