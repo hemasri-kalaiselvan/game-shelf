@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shell Match</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--back:#1f4a51;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:440px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible,.card:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:64px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:var(--board);padding:10px;border-radius:16px}
+.card{aspect-ratio:1;border:0;padding:0;border-radius:12px;background:var(--back);font-size:clamp(28px,10vw,44px);cursor:pointer;color:inherit;transition:background .15s}
+.card.open{background:#d9efe6}
+.card.done{background:#3fb0a6}
+.card span{display:none}
+.card.open span,.card.done span{display:inline}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+#win{margin:16px 0 0;text-align:center;min-height:24px;font:700 20px Georgia,serif}
+.row{display:flex;justify-content:center;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header>
+<h1>Shell Match</h1>
+<div class="scores"><div class="sc"><small>Moves</small><b id="moves">0</b></div><div class="sc"><small>Best</small><b id="best">-</b></div></div>
+</header>
+<div id="grid"></div>
+<div id="win" aria-live="polite"></div>
+<div class="row"><button class="go" id="again">New game</button></div>
+</main>
+<script>
+const EMOJI=['🐚','🐙','🦀','🐠','🐢','🦑','⭐','🐬'];
+let first=null,lock=false,moves=0,found=0,best=0;
+try{best=+localStorage.getItem('shell-match-best')||0}catch(e){}
+const grid=document.getElementById('grid');
+function show(){document.getElementById('moves').textContent=moves;document.getElementById('best').textContent=best||'-'}
+function start(){
+const d=[...EMOJI,...EMOJI];for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
+grid.innerHTML='';first=null;lock=false;moves=0;found=0;document.getElementById('win').textContent='';
+d.forEach(e=>{const b=document.createElement('button');b.className='card';b.setAttribute('aria-label','Hidden card');b.dataset.e=e;b.innerHTML='<span>'+e+'</span>';b.onclick=()=>flip(b);grid.appendChild(b)});show()}
+function flip(b){
+if(lock||b.classList.contains('open')||b.classList.contains('done'))return;
+b.classList.add('open');b.setAttribute('aria-label',b.dataset.e);
+if(!first){first=b;return}
+moves++;show();
+if(first.dataset.e===b.dataset.e){first.className=b.className='card done';first=null;found++;
+if(found===EMOJI.length){document.getElementById('win').textContent='Cleared in '+moves+' moves!';
+if(!best||moves<best){best=moves;try{localStorage.setItem('shell-match-best',best)}catch(e){}show()}}}
+else{lock=true;const a=first;first=null;setTimeout(()=>{a.classList.remove('open');b.classList.remove('open');a.setAttribute('aria-label','Hidden card');b.setAttribute('aria-label','Hidden card');lock=false},700)}}
+document.getElementById('again').onclick=start;
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fin Flap</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:none}
+main{width:100%;max-width:400px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:58px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+.wrap{position:relative}
+canvas{display:block;width:100%;aspect-ratio:2/3;background:#173c42;border-radius:16px;touch-action:none}
+#ov{position:absolute;inset:0;border-radius:16px;background:rgba(14,42,47,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:700 24px Georgia,serif;text-align:center;padding:16px;pointer-events:none}
+#ov small{font:400 14px "Trebuchet MS",sans-serif;color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Fin Flap</h1><div class="scores"><div class="sc"><small>Score</small><b id="score">0</b></div><div class="sc"><small>Best</small><b id="best">0</b></div></div></header>
+<div class="wrap"><canvas id="c" width="320" height="480" tabindex="0" aria-label="Fin Flap game, tap to swim up"></canvas>
+<div id="ov"><span id="msg">Fin Flap</span><small id="sm">Tap or press Space to swim up</small></div></div>
+</main>
+<script>
+const cv=document.getElementById('c'),x=cv.getContext('2d'),$=id=>document.getElementById(id);
+const GAP=130,PW=52,SPEED=1.7,G=.34,JUMP=-5.6;
+let y,v,pipes,score,best=0,state='ready',frame=0;
+try{best=+localStorage.getItem('fin-flap-best')||0}catch(e){}
+$('best').textContent=best;
+function reset(){y=220;v=0;pipes=[];score=0;frame=0;$('score').textContent=0}
+function flap(){
+if(state==='ready'||state==='dead'){if(state==='dead')reset();state='play';$('ov').style.display='none'}
+v=JUMP}
+function add(){const top=60+Math.random()*(480-GAP-120);pipes.push({x:320,top,done:false})}
+function step(){
+frame++;v+=G;y+=v;
+if(frame%95===1)add();
+pipes.forEach(p=>p.x-=SPEED);
+pipes=pipes.filter(p=>p.x>-PW);
+for(const p of pipes){
+if(!p.done&&p.x+PW<80){p.done=true;score++;$('score').textContent=score}
+if(80+12>p.x&&80-12<p.x+PW&&(y-10<p.top||y+10>p.top+GAP))return die()}
+if(y>480-10||y<-20)die()}
+function die(){state='dead';if(score>best){best=score;try{localStorage.setItem('fin-flap-best',best)}catch(e){}$('best').textContent=best}
+$('msg').textContent='Game over';$('sm').textContent='Score: '+score+'. Tap to try again';$('ov').style.display='flex'}
+function draw(){
+x.fillStyle='#173c42';x.fillRect(0,0,320,480);
+x.fillStyle='#1f4a51';for(let i=0;i<4;i++){x.beginPath();x.arc((i*110-frame*.3%110+330)%330,470,50,Math.PI,0);x.fill()}
+pipes.forEach(p=>{x.fillStyle='#e57a3a';x.beginPath();x.roundRect(p.x,-10,PW,p.top+10,[0,0,10,10]);x.fill();x.beginPath();x.roundRect(p.x,p.top+GAP,PW,480-p.top-GAP+10,[10,10,0,0]);x.fill();
+x.fillStyle='#f2b84b';x.fillRect(p.x+8,p.top-5,PW-16,5);x.fillRect(p.x+8,p.top+GAP,PW-16,5)});
+x.save();x.translate(80,y);x.rotate(Math.max(-.5,Math.min(.9,v*.08)));
+x.fillStyle='#f2b84b';x.beginPath();x.ellipse(0,0,16,11,0,0,7);x.fill();
+x.beginPath();x.moveTo(-14,0);x.lineTo(-26,-9);x.lineTo(-26,9);x.fill();
+x.fillStyle='#0e2a2f';x.beginPath();x.arc(8,-3,2.5,0,7);x.fill();x.restore()}
+let last=0;
+function loop(t){requestAnimationFrame(loop);if(t-last<16)return;last=t;
+if(state==='play')step();else if(state==='ready'){y=220+Math.sin(t/300)*8;v=0}
+draw()}
+['pointerdown'].forEach(ev=>cv.addEventListener(ev,e=>{e.preventDefault();flap()}));
+addEventListener('keydown',e=>{if(e.code==='Space'||e.key==='ArrowUp'){e.preventDefault();flap()}});
+reset();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

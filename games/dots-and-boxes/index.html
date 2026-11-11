@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dots and Boxes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation}
+main{width:100%;max-width:440px;padding:20px 12px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:58px;border-bottom:4px solid transparent}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+.sc.p1{border-color:#f2b84b}.sc.p2{border-color:#3fb0a6}
+.sc.off{border-color:transparent}
+svg{display:block;width:100%;background:var(--board);border-radius:16px;touch-action:manipulation}
+.hit{stroke:transparent;stroke-width:26;cursor:pointer}
+.guide{stroke:#2c5a61;stroke-width:3;stroke-linecap:round}
+#st{text-align:center;min-height:28px;margin:14px 0 0;font:700 20px Georgia,serif}
+.row{display:flex;justify-content:center;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Dots and Boxes</h1><div class="scores"><div class="sc p1" id="s1"><small>Gold</small><b id="a">0</b></div><div class="sc p2" id="s2"><small>Teal</small><b id="b">0</b></div></div></header>
+<svg id="svg" viewBox="0 0 300 300" aria-label="Dots and boxes board"></svg>
+<div id="st" aria-live="polite"></div>
+<div class="row"><button class="go" id="again">New game</button></div>
+</main>
+<script>
+const N=4,S=60,M=30,COL={1:'#f2b84b',2:'#3fb0a6'},$=id=>document.getElementById(id),svg=$('svg');
+let H,V,own,turn,sc,left;
+const make=(r,c)=>Array.from({length:r},()=>Array(c).fill(0));
+function start(){H=make(N+1,N);V=make(N,N+1);own=make(N,N);turn=1;sc={1:0,2:0};left=2*N*(N+1);draw()}
+function done(r,c){return H[r][c]&&H[r+1][c]&&V[r][c]&&V[r][c+1]}
+function draw(){let s='';
+for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(own[r][c])s+=`<rect x="${M+c*S+4}" y="${M+r*S+4}" width="${S-8}" height="${S-8}" rx="6" fill="${COL[own[r][c]]}" opacity=".45"/>`;
+for(let r=0;r<=N;r++)for(let c=0;c<N;c++){const x=M+c*S,y=M+r*S;s+=H[r][c]?`<line x1="${x}" y1="${y}" x2="${x+S}" y2="${y}" stroke="${COL[H[r][c]]}" stroke-width="7" stroke-linecap="round"/>`:`<line class="guide" x1="${x+8}" y1="${y}" x2="${x+S-8}" y2="${y}"/><line class="hit" data-k="h${r}_${c}" x1="${x}" y1="${y}" x2="${x+S}" y2="${y}"/>`}
+for(let r=0;r<N;r++)for(let c=0;c<=N;c++){const x=M+c*S,y=M+r*S;s+=V[r][c]?`<line x1="${x}" y1="${y}" x2="${x}" y2="${y+S}" stroke="${COL[V[r][c]]}" stroke-width="7" stroke-linecap="round"/>`:`<line class="guide" x1="${x}" y1="${y+8}" x2="${x}" y2="${y+S-8}"/><line class="hit" data-k="v${r}_${c}" x1="${x}" y1="${y}" x2="${x}" y2="${y+S}"/>`}
+for(let r=0;r<=N;r++)for(let c=0;c<=N;c++)s+=`<circle cx="${M+c*S}" cy="${M+r*S}" r="5" fill="#e9f3ef"/>`;
+svg.innerHTML=s;$('a').textContent=sc[1];$('b').textContent=sc[2];
+$('s1').classList.toggle('off',left>0&&turn!==1);$('s2').classList.toggle('off',left>0&&turn!==2);
+$('st').textContent=left?(turn===1?'Gold to play':'Teal to play'):(sc[1]===sc[2]?'Draw!':(sc[1]>sc[2]?'Gold wins!':'Teal wins!'))}
+svg.addEventListener('pointerdown',e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k||!left)return;e.preventDefault();
+const [r,c]=k.slice(1).split('_').map(Number);let got=0;
+if(k[0]==='h'){H[r][c]=turn;if(r>0&&done(r-1,c)&&!own[r-1][c]){own[r-1][c]=turn;got++}if(r<N&&done(r,c)&&!own[r][c]){own[r][c]=turn;got++}}
+else{V[r][c]=turn;if(c>0&&done(r,c-1)&&!own[r][c-1]){own[r][c-1]=turn;got++}if(c<N&&done(r,c)&&!own[r][c]){own[r][c]=turn;got++}}
+left--;sc[turn]+=got;if(!got)turn=turn===1?2:1;draw()});
+$('again').onclick=start;
+start();
+</script>
+</body>
+</html>

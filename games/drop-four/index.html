@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drop Four</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--hole:#0e2a2f;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation}
+main{width:100%;max-width:440px;padding:20px 12px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0 0 14px;letter-spacing:-.5px}
+#grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--board);padding:8px;border-radius:16px}
+.col{display:grid;grid-template-rows:repeat(6,1fr);gap:6px;border:0;background:none;padding:0;cursor:pointer}
+.h{aspect-ratio:1;border-radius:50%;background:var(--hole)}
+.h.a{background:#f2b84b}.h.b{background:#3fb0a6}
+.h.w{box-shadow:0 0 0 3px var(--ink)}
+#st{text-align:center;min-height:28px;margin:14px 0 0;font:700 20px Georgia,serif}
+.row{display:flex;justify-content:center;gap:10px;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 20px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button.alt{background:var(--board);color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<h1>Drop Four</h1>
+<div id="grid"></div>
+<div id="st" aria-live="polite"></div>
+<div class="row"><button class="go" id="again">New game</button><button class="go alt" id="mode">Mode: vs CPU</button></div>
+</main>
+<script>
+const R=6,C=7,$=id=>document.getElementById(id),grid=$('grid');
+let b,turn,over,cpu=true,busy=false;const holes=[];
+for(let c=0;c<C;c++){const col=document.createElement('button');col.className='col';col.setAttribute('aria-label','Drop in column '+(c+1));col.onclick=()=>play(c);
+for(let r=0;r<R;r++){const h=document.createElement('div');h.className='h';col.appendChild(h);holes[r*C+c]=h}grid.appendChild(col)}
+function drop(s,c,p){for(let r=R-1;r>=0;r--)if(!s[r*C+c]){s[r*C+c]=p;return r}return -1}
+function line(s,i){const p=s[i];if(!p)return null;const r=i/C|0,c=i%C;
+for(const[dr,dc]of[[0,1],[1,0],[1,1],[1,-1]]){const o=[i];for(let k=1;k<4;k++){const rr=r+dr*k,cc=c+dc*k;if(rr<0||rr>=R||cc<0||cc>=C||s[rr*C+cc]!==p)break;o.push(rr*C+cc)}if(o.length===4)return o}return null}
+function win(s){for(let i=0;i<R*C;i++){const l=line(s,i);if(l)return l}return null}
+function score(s){let v=0;for(let r=0;r<R;r++)if(s[r*C+3]==='b')v+=3;else if(s[r*C+3]==='a')v-=3;
+for(let i=0;i<R*C;i++){const r=i/C|0,c=i%C;for(const[dr,dc]of[[0,1],[1,0],[1,1],[1,-1]]){let w=[];for(let k=0;k<4;k++){const rr=r+dr*k,cc=c+dc*k;if(rr<0||rr>=R||cc<0||cc>=C)break;w.push(s[rr*C+cc])}
+if(w.length<4)continue;const a=w.filter(x=>x==='a').length,bb=w.filter(x=>x==='b').length;
+if(a&&bb)continue;if(bb)v+=[0,1,4,20][bb-1];if(a)v-=[0,1,4,20][a-1]}}return v}
+function mm(s,d,al,be,max){const w=win(s);if(w)return s[w[0]]==='b'?1000+d:-1000-d;if(d===0||s.every(Boolean))return score(s);
+const order=[3,2,4,1,5,0,6];let best=max?-1e9:1e9;
+for(const c of order){if(s[c])continue;const t=s.slice();drop(t,c,max?'b':'a');const v=mm(t,d-1,al,be,!max);
+if(max){best=Math.max(best,v);al=Math.max(al,v)}else{best=Math.min(best,v);be=Math.min(be,v)}if(al>=be)break}return best}
+function cpuMove(){let bc=3,bv=-1e9;for(const c of [3,2,4,1,5,0,6]){if(b[c])continue;const t=b.slice();drop(t,c,'b');const v=mm(t,4,-1e9,1e9,false);if(v>bv){bv=v;bc=c}}return bc}
+function render(){b.forEach((v,i)=>{holes[i].className='h'+(v?' '+v:'')})}
+function status(){$('st').textContent=over?$('st').textContent:(cpu?(turn==='a'?'Your turn':'CPU thinking...'):(turn==='a'?'Gold to play':'Teal to play'))}
+function place(c){const r=drop(b,c,turn);if(r<0)return false;render();const w=win(b);
+if(w){over=true;w.forEach(i=>holes[i].classList.add('w'));$('st').textContent=cpu?(turn==='a'?'You win!':'CPU wins'):(turn==='a'?'Gold wins!':'Teal wins!')}
+else if(b.every(Boolean)){over=true;$('st').textContent='Draw'}
+else turn=turn==='a'?'b':'a';return true}
+function play(c){if(over||busy||(cpu&&turn==='b'))return;if(!place(c))return;status();
+if(cpu&&!over){busy=true;setTimeout(()=>{place(cpuMove());busy=false;status()},400)}}
+function start(){b=Array(R*C).fill('');turn='a';over=false;busy=false;render();status()}
+$('again').onclick=start;
+$('mode').onclick=e=>{cpu=!cpu;e.target.textContent='Mode: '+(cpu?'vs CPU':'2 players');start()};
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Word Reef</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--cell:#1f4a51;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation}
+main{width:100%;max-width:440px;padding:16px 12px 24px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:8px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:64px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+#grid{display:grid;grid-template-rows:repeat(6,1fr);gap:6px;max-width:320px;margin:0 auto}
+.r{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.t{aspect-ratio:1;border-radius:8px;background:var(--cell);display:flex;align-items:center;justify-content:center;font:700 clamp(22px,8vw,30px) Georgia,serif;text-transform:uppercase}
+.t.f{background:#2c5a61}
+.t.ok{background:#3fb0a6;color:#06201f}
+.t.mid{background:#f2b84b;color:#2a1c00}
+.t.no{background:#10262a;color:var(--mute)}
+#msg{text-align:center;min-height:26px;margin:10px 0;font:700 18px Georgia,serif}
+#kb{display:flex;flex-direction:column;gap:6px}
+.kr{display:flex;gap:5px;justify-content:center}
+.k{flex:1;max-width:40px;height:48px;border:0;border-radius:8px;background:var(--board);color:var(--ink);font:600 15px "Trebuchet MS",sans-serif;text-transform:uppercase;cursor:pointer;padding:0}
+.k.w{flex:1.6;max-width:62px;font-size:12px}
+.k.ok{background:#3fb0a6;color:#06201f}.k.mid{background:#f2b84b;color:#2a1c00}.k.no{background:#10262a;color:var(--mute)}
+.row{display:flex;justify-content:center;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:10px 20px;background:var(--accent);color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Word Reef</h1><div class="sc"><small>Wins</small><b id="wins">0</b></div></header>
+<div id="grid"></div>
+<div id="msg" aria-live="polite"></div>
+<div id="kb"></div>
+<div class="row"><button class="go" id="again">New word</button></div>
+</main>
+<script>
+const W="OCEAN CORAL REEFS SHELL TIDAL WAVES SANDY BEACH SHORE SWIRL FLOAT BRINE DEPTH KELP SQUID WHALE SHARK SEALS CRABS SNAIL PEARL ISLES COAST SURFS SPRAY MARSH RIVER BROOK CLOUD STORM RAINY WINDY BREEZ GUSTS SUNNY LIGHT NIGHT MOONS STARS PLANT GRASS LEAFY FRUIT APPLE GRAPE LEMON MANGO PEACH BREAD SWEET SUGAR HONEY SPICE PEPPER CHILI BERRY TABLE CHAIR HOUSE ROOMS DOORS WALLS FLOOR CLOCK WATCH PHONE MUSIC DANCE PIANO VOICE LAUGH SMILE HAPPY DREAM SLEEP QUIET PEACE TRAIN PLANE TRUCK ROADS PATHS BRAVE QUICK SHARP SMART WORLD EARTH".split(" ").filter(w=>w.length===5);
+let ans,row,col,g,done,wins=0;
+const $=id=>document.getElementById(id),grid=$('grid'),msg=$('msg'),kb=$('kb'),keys={};
+const rows=["qwertyuiop","asdfghjkl","+zxcvbnm-"];
+rows.forEach(r=>{const d=document.createElement('div');d.className='kr';[...r].forEach(ch=>{const b=document.createElement('button');b.className='k'+(ch==='+'||ch==='-'?' w':'');
+b.textContent=ch==='+'?'Enter':ch==='-'?'Del':ch;b.onclick=()=>key(ch==='+'?'Enter':ch==='-'?'Backspace':ch);if(ch.length&&ch!=='+'&&ch!=='-')keys[ch]=b;d.appendChild(b)});kb.appendChild(d)});
+function start(){ans=W[Math.random()*W.length|0];row=0;col=0;g=Array.from({length:6},()=>Array(5).fill(''));done=false;msg.textContent='';
+grid.innerHTML='';for(let i=0;i<6;i++){const r=document.createElement('div');r.className='r';for(let j=0;j<5;j++){const t=document.createElement('div');t.className='t';r.appendChild(t)}grid.appendChild(r)}
+Object.values(keys).forEach(k=>k.className='k')}
+function tile(r,c){return grid.children[r].children[c]}
+function key(k){if(done)return;
+if(k==='Backspace'){if(col>0){col--;g[row][col]='';tile(row,col).textContent='';tile(row,col).classList.remove('f')}return}
+if(k==='Enter'){if(col<5){msg.textContent='Need 5 letters';return}submit();return}
+if(/^[a-z]$/i.test(k)&&col<5){g[row][col]=k.toUpperCase();const t=tile(row,col);t.textContent=k;t.classList.add('f');col++;msg.textContent=''}}
+function submit(){
+const guess=g[row].join(''),res=Array(5).fill('no'),pool=ans.split('');
+for(let i=0;i<5;i++)if(guess[i]===ans[i]){res[i]='ok';pool[i]=null}
+for(let i=0;i<5;i++)if(res[i]==='no'){const j=pool.indexOf(guess[i]);if(j>-1){res[i]='mid';pool[j]=null}}
+const rank={no:0,mid:1,ok:2};
+res.forEach((s,i)=>{const t=tile(row,i);t.classList.remove('f');t.classList.add(s);const kk=keys[guess[i].toLowerCase()];
+const cur=kk.classList.contains('ok')?2:kk.classList.contains('mid')?1:kk.classList.contains('no')?0:-1;
+if(rank[s]>cur){kk.className='k '+s}});
+if(guess===ans){done=true;wins++;$('wins').textContent=wins;msg.textContent='You got it!';return}
+row++;col=0;if(row===6){done=true;msg.textContent='The word was '+ans}}
+addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;key(e.key)});
+$('again').onclick=start;
+start();
+</script>
+</body>
+</html>

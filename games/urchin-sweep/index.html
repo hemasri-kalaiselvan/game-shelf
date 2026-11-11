@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Urchin Sweep</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--cell:#2a6068;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;-webkit-touch-callout:none}
+main{width:100%;max-width:440px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:58px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+#grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;background:var(--board);padding:8px;border-radius:16px}
+.c{aspect-ratio:1;border:0;padding:0;border-radius:7px;background:var(--cell);color:var(--ink);font:700 clamp(15px,5vw,22px) Georgia,serif;cursor:pointer}
+.c.o{background:#0f2326;cursor:default}
+.c.bomb{background:#d95d52}
+.n1{color:#8fd6bf}.n2{color:#f2b84b}.n3{color:#ee9a3c}.n4,.n5,.n6{color:#e57a3a}
+#st{text-align:center;min-height:26px;margin:14px 0 0;font:700 20px Georgia,serif}
+.row{display:flex;justify-content:center;gap:10px;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 20px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button.alt{background:var(--board);color:var(--ink)}
+button.alt.on{background:#3fb0a6;color:#06201f}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Urchin Sweep</h1><div class="scores"><div class="sc"><small>Urchins</small><b id="left">10</b></div><div class="sc"><small>Time</small><b id="time">0</b></div></div></header>
+<div id="grid"></div>
+<div id="st" aria-live="polite">Clear the reef, avoid the urchins</div>
+<div class="row"><button class="go" id="again">New game</button><button class="go alt" id="flag">Flag mode: off</button></div>
+</main>
+<script>
+const R=8,C=8,M=10,$=id=>document.getElementById(id),grid=$('grid');
+let mines,open,flags,num,started,over,flagMode=false,secs,timer,cells=[];
+for(let i=0;i<R*C;i++){const b=document.createElement('button');b.className='c';b.setAttribute('aria-label','Hidden tile');
+let hold;b.onpointerdown=()=>{hold=setTimeout(()=>{hold=null;toggleFlag(i)},450)};
+b.onpointerup=()=>{if(hold){clearTimeout(hold);hold=null;flagMode?toggleFlag(i):reveal(i)}};
+b.onpointerleave=()=>{clearTimeout(hold);hold=null};b.oncontextmenu=e=>{e.preventDefault();toggleFlag(i)};
+grid.appendChild(b);cells.push(b)}
+function nb(i){const r=i/C|0,c=i%C,o=[];for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){if(!a&&!b)continue;const rr=r+a,cc=c+b;if(rr>=0&&rr<R&&cc>=0&&cc<C)o.push(rr*C+cc)}return o}
+function start(){clearInterval(timer);mines=new Set();open=new Set();flags=new Set();started=false;over=false;secs=0;$('time').textContent=0;$('left').textContent=M;$('st').textContent='Clear the reef, avoid the urchins';
+cells.forEach(c=>{c.className='c';c.textContent='';c.setAttribute('aria-label','Hidden tile')})}
+function plant(safe){const ban=new Set([safe,...nb(safe)]);while(mines.size<M){const i=Math.random()*R*C|0;if(!ban.has(i))mines.add(i)}
+num=Array.from({length:R*C},(_,i)=>nb(i).filter(n=>mines.has(n)).length);
+timer=setInterval(()=>{secs++;$('time').textContent=secs},1000)}
+function toggleFlag(i){if(over||open.has(i))return;flags.has(i)?flags.delete(i):flags.add(i);cells[i].textContent=flags.has(i)?'🚩':'';$('left').textContent=M-flags.size}
+function reveal(i){if(over||open.has(i)||flags.has(i))return;if(!started){started=true;plant(i)}
+if(mines.has(i))return lose(i);
+const q=[i];while(q.length){const k=q.pop();if(open.has(k)||flags.has(k))continue;open.add(k);const c=cells[k];c.classList.add('o');
+if(num[k]){c.textContent=num[k];c.classList.add('n'+num[k])}else nb(k).forEach(n=>q.push(n))}
+if(open.size===R*C-M)win()}
+function lose(i){over=true;clearInterval(timer);mines.forEach(m=>{cells[m].textContent='🦔';cells[m].classList.add('o')});cells[i].classList.add('bomb');$('st').textContent='Ouch! Try again'}
+function win(){over=true;clearInterval(timer);$('st').textContent='Reef cleared in '+secs+'s!';mines.forEach(m=>{cells[m].textContent='🚩'})}
+$('again').onclick=start;
+$('flag').onclick=e=>{flagMode=!flagMode;e.target.textContent='Flag mode: '+(flagMode?'on':'off');e.target.classList.toggle('on',flagMode)};
+start();
+</script>
+</body>
+</html>

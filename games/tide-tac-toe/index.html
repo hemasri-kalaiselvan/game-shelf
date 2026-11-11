@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tide Tac Toe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--cell:#1f4a51;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:440px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:54px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+#grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:var(--board);padding:10px;border-radius:16px}
+.c{aspect-ratio:1;border:0;border-radius:12px;background:var(--cell);font:700 clamp(40px,16vw,72px) Georgia,serif;cursor:pointer;color:var(--ink)}
+.c.x{color:#8fd6bf}
+.c.o{color:#f2b84b}
+.c.win{background:#2c6a6a}
+#st{margin:16px 0 0;text-align:center;min-height:28px;font:700 20px Georgia,serif}
+.row{display:flex;justify-content:center;gap:10px;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button.alt{background:var(--board);color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header>
+<h1>Tide Tac Toe</h1>
+<div class="scores"><div class="sc"><small>You</small><b id="w">0</b></div><div class="sc"><small>Draw</small><b id="d">0</b></div><div class="sc"><small>CPU</small><b id="l">0</b></div></div>
+</header>
+<div id="grid"></div>
+<div id="st" aria-live="polite">Your turn</div>
+<div class="row"><button class="go" id="again">New round</button><button class="go alt" id="lvl">Level: Easy</button></div>
+</main>
+<script>
+const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let b,over,tally={w:0,d:0,l:0},hard=false;
+const grid=document.getElementById('grid'),st=document.getElementById('st'),cells=[];
+for(let i=0;i<9;i++){const c=document.createElement('button');c.className='c';c.setAttribute('aria-label','Cell '+(i+1));c.onclick=()=>play(i);grid.appendChild(c);cells.push(c)}
+function winner(s){for(const l of L)if(s[l[0]]&&s[l[0]]===s[l[1]]&&s[l[1]]===s[l[2]])return[s[l[0]],l];return null}
+function mm(s,p){const w=winner(s);if(w)return w[0]==='O'?1:-1;if(s.every(Boolean))return 0;
+let best=p==='O'?-2:2;for(let i=0;i<9;i++)if(!s[i]){s[i]=p;const v=mm(s,p==='O'?'X':'O');s[i]='';best=p==='O'?Math.max(best,v):Math.min(best,v)}return best}
+function cpu(){const free=[];b.forEach((v,i)=>{if(!v)free.push(i)});
+if(!hard&&Math.random()<.4)return free[Math.random()*free.length|0];
+let bi=free[0],bv=-2;for(const i of free){b[i]='O';const v=mm(b,'X');b[i]='';if(v>bv){bv=v;bi=i}}return bi}
+function draw(){b.forEach((v,i)=>{cells[i].textContent=v;cells[i].className='c '+v.toLowerCase()})}
+function check(){const w=winner(b);
+if(w){over=true;w[1].forEach(i=>cells[i].classList.add('win'));if(w[0]==='X'){tally.w++;st.textContent='You win!'}else{tally.l++;st.textContent='CPU wins'}}
+else if(b.every(Boolean)){over=true;tally.d++;st.textContent='Draw'}
+if(over){['w','d','l'].forEach(k=>document.getElementById(k).textContent=tally[k])}return over}
+function play(i){if(over||b[i])return;b[i]='X';draw();if(check())return;st.textContent='CPU thinking...';
+setTimeout(()=>{b[cpu()]='O';draw();if(!check())st.textContent='Your turn'},350)}
+function start(){b=Array(9).fill('');over=false;draw();st.textContent='Your turn'}
+document.getElementById('again').onclick=start;
+document.getElementById('lvl').onclick=e=>{hard=!hard;e.target.textContent='Level: '+(hard?'Hard':'Easy');start()};
+start();
+</script>
+</body>
+</html>

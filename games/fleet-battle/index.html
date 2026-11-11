@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Battle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation}
+main{width:100%;max-width:440px;padding:20px 14px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0 0 14px;letter-spacing:-.5px}
+h2{font:700 20px Georgia,serif;margin:0 0 10px;text-align:center}
+.g{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:var(--board);padding:6px;border-radius:14px}
+.g.sm{max-width:190px;margin:0 auto;gap:2px;padding:4px}
+.q{aspect-ratio:1;border:0;border-radius:5px;background:#1f4a51;color:#fff;font:700 clamp(12px,4vw,18px) sans-serif;padding:0;cursor:pointer}
+.sm .q{font-size:10px}
+.q.ship{background:#8fb3ae}
+.q.miss{background:#10262a;color:#8fb3ae}
+.q.hit{background:#d95d52}
+.q:disabled{cursor:default}
+.note{text-align:center;min-height:28px;margin:12px 0;font:700 18px Georgia,serif}
+.lbl{text-align:center;color:var(--mute);font-size:13px;margin:14px 0 6px}
+.row{display:flex;justify-content:center;gap:10px;margin-top:12px}
+.cover{text-align:center;padding:70px 10px}
+.cover p{font:700 24px Georgia,serif;margin:0 0 22px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button.alt{background:var(--board);color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<h1>Fleet Battle</h1>
+<div id="app"></div>
+</main>
+<script>
+const LENS=[4,3,3,2],app=document.getElementById('app');
+let ships,shots,cur,phase,next,coverMsg,fired,note,winner;
+function fleet(){const g=Array(64).fill(-1);LENS.forEach((L,id)=>{for(;;){const h=Math.random()<.5,r=Math.random()*8|0,c=Math.random()*8|0;if(h?c+L>8:r+L>8)continue;
+const idx=[...Array(L).keys()].map(k=>h?r*8+c+k:(r+k)*8+c);if(idx.some(i=>g[i]>=0))continue;idx.forEach(i=>g[i]=id);break}});return g}
+function newGame(){ships=[fleet(),fleet()];shots=[Array(64).fill(0),Array(64).fill(0)];cur=0;phase='setup';fired=false;note='';render()}
+const sunk=(p,id)=>ships[p].every((s,i)=>s!==id||shots[p][i]===2);
+function grid(p,show,click,small){return '<div class="g'+(small?' sm':'')+'">'+ships[p].map((s,i)=>{const sh=shots[p][i];let k='q';if(sh===1)k+=' miss';else if(sh===2)k+=' hit';else if(show&&s>=0)k+=' ship';
+return `<button class="${k}" data-i="${i}" ${click&&!sh&&!fired?'':'disabled'} aria-label="Cell ${i+1}">${sh===1?'•':sh===2?'✕':''}</button>`}).join('')+'</div>'}
+function render(){let h='';
+if(phase==='setup')h=`<h2>Player ${cur+1}: your fleet</h2>${grid(cur,true,false)}<div class="note">Ships: 4, 3, 3 and 2 long</div><div class="row"><button class="go alt" data-a="shuffle">Shuffle</button><button class="go" data-a="done">Done, hide it</button></div>`;
+else if(phase==='cover')h=`<div class="cover"><p>${coverMsg}</p><button class="go" data-a="ready">I'm ready</button></div>`;
+else if(phase==='battle'){const e=1-cur;h=`<h2>Player ${cur+1}: fire!</h2>${grid(e,false,true)}<div class="note" aria-live="polite">${note}</div>${fired?'<div class="row"><button class="go" data-a="end">End turn</button></div>':''}<div class="lbl">Your fleet</div>${grid(cur,true,false,true)}`}
+else h=`<div class="cover"><p>Player ${winner+1} wins! 🎉</p><button class="go" data-a="new">New game</button></div>`;
+app.innerHTML=h}
+app.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const a=b.dataset.a;
+if(b.dataset.i!==undefined){if(phase!=='battle'||fired)return;const i=+b.dataset.i,en=1-cur;if(shots[en][i])return;const id=ships[en][i];shots[en][i]=id>=0?2:1;fired=true;
+note=id<0?'Miss 🌊':(sunk(en,id)?'You sank a ship! 💥':'Hit! 🔥');
+if(LENS.every((_,k)=>sunk(en,k))){phase='over';winner=cur}render();return}
+if(a==='shuffle'){ships[cur]=fleet();render()}
+else if(a==='done'){if(cur===0){cur=1;phase='cover';coverMsg='Pass the phone to Player 2';next='setup'}else{cur=0;phase='cover';coverMsg='Battle! Pass the phone to Player 1';next='battle'}render()}
+else if(a==='ready'){phase=next;fired=false;note='';render()}
+else if(a==='end'){cur=1-cur;phase='cover';coverMsg='Pass the phone to Player '+(cur+1);next='battle';render()}
+else if(a==='new')newGame()});
+newGame();
+</script>
+</body>
+</html>

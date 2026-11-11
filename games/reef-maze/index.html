@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reef Maze</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:none}
+main{width:100%;max-width:420px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:56px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+.wrap{position:relative}
+canvas{display:block;width:100%;aspect-ratio:1;background:var(--board);border-radius:16px}
+#ov{position:absolute;inset:0;border-radius:16px;background:rgba(14,42,47,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:700 24px Georgia,serif;text-align:center}
+#ov.show{display:flex}
+#hint{color:var(--mute);text-align:center;font-size:14px;margin:12px 0 0}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+.row{display:flex;justify-content:center;margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Reef Maze</h1><div class="scores"><div class="sc"><small>Level</small><b id="lv">1</b></div><div class="sc"><small>Moves</small><b id="mv">0</b></div><div class="sc"><small>Best</small><b id="best">1</b></div></div></header>
+<div class="wrap"><canvas id="c" width="360" height="360" aria-label="Maze"></canvas>
+<div id="ov"><span id="om">Level complete!</span><button class="go" id="next">Next level</button></div></div>
+<p id="hint">Swipe or use arrow keys. You slide until a turn or junction.</p>
+<div class="row"><button class="go" id="reset">New maze</button></div>
+</main>
+<script>
+const $=id=>document.getElementById(id),cv=$('c'),x=cv.getContext('2d');
+let lvl=1,n,m,px,py,moves,best=1,won;
+try{best=+localStorage.getItem('reef-maze-best')||1}catch(e){}
+$('best').textContent=best;
+const DX=[0,1,0,-1],DY=[-1,0,1,0];
+function gen(){n=Math.min(4+lvl,16);m=Array(n*n).fill(0);const seen=new Set([0]),st=[0];
+while(st.length){const i=st[st.length-1],cx=i%n,cy=i/n|0,o=[0,1,2,3].filter(d=>{const nx=cx+DX[d],ny=cy+DY[d];return nx>=0&&ny>=0&&nx<n&&ny<n&&!seen.has(ny*n+nx)});
+if(!o.length){st.pop();continue}const d=o[Math.random()*o.length|0],j=(cy+DY[d])*n+cx+DX[d];m[i]|=1<<d;m[j]|=1<<((d+2)%4);seen.add(j);st.push(j)}}
+const open=i=>[1,2,4,8].filter(b=>m[i]&b).length;
+function start(){gen();px=py=0;moves=0;won=false;$('ov').classList.remove('show');$('lv').textContent=lvl;$('mv').textContent=0;draw()}
+function draw(){const s=360/n;x.clearRect(0,0,360,360);
+x.fillStyle='#3fb0a6';x.fillRect((n-1)*s+s*.2,(n-1)*s+s*.2,s*.6,s*.6);
+x.strokeStyle='#8fd6bf';x.lineWidth=Math.max(2,s*.08);x.lineCap='round';x.beginPath();
+for(let i=0;i<n*n;i++){const cx=(i%n)*s,cy=(i/n|0)*s;
+if(!(m[i]&1)){x.moveTo(cx,cy);x.lineTo(cx+s,cy)}if(!(m[i]&2)){x.moveTo(cx+s,cy);x.lineTo(cx+s,cy+s)}if(!(m[i]&4)){x.moveTo(cx,cy+s);x.lineTo(cx+s,cy+s)}if(!(m[i]&8)){x.moveTo(cx,cy);x.lineTo(cx,cy+s)}}
+x.stroke();x.fillStyle='#f2b84b';x.beginPath();x.arc(px*s+s/2,py*s+s/2,s*.3,0,7);x.fill()}
+function move(d){if(won)return;const bit=1<<d;let moved=false;
+while(m[py*n+px]&bit){px+=DX[d];py+=DY[d];moved=true;if(px===n-1&&py===n-1)break;const i=py*n+px;if(open(i)>=3||!(m[i]&bit))break}
+if(!moved)return;moves++;$('mv').textContent=moves;draw();
+if(px===n-1&&py===n-1){won=true;if(lvl>best){best=lvl;try{localStorage.setItem('reef-maze-best',best)}catch(e){}$('best').textContent=best}$('om').textContent='Level '+lvl+' done in '+moves+' moves';$('ov').classList.add('show')}}
+addEventListener('keydown',e=>{const d={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(d!==undefined){e.preventDefault();move(d)}});
+let sx,sy;
+addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;
+if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;move(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0))});
+$('next').onclick=()=>{lvl++;start()};$('reset').onclick=start;
+start();
+</script>
+</body>
+</html>

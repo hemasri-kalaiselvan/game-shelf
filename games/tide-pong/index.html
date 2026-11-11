@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tide Pong</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:none}
+main{width:100%;max-width:360px;padding:16px 14px 24px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:8px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.wrap{position:relative}
+canvas{display:block;width:100%;aspect-ratio:2/3;background:var(--board);border-radius:16px;touch-action:none}
+#ov{position:absolute;inset:0;border-radius:16px;background:rgba(14,42,47,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:700 24px Georgia,serif;text-align:center;padding:16px}
+#ov small{font:400 14px "Trebuchet MS",sans-serif;color:var(--ink)}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button.alt{background:var(--board);color:var(--ink);padding:8px 14px;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Tide Pong</h1><button class="go alt" id="mode">Mode: vs CPU</button></header>
+<div class="wrap"><canvas id="c" width="300" height="450" aria-label="Pong court"></canvas>
+<div id="ov"><span id="msg">Tide Pong</span><small id="sm">Drag to move your paddle. First to 7 wins.</small><button class="go" id="go">Start</button></div></div>
+</main>
+<script>
+const W=300,H=450,PW=64,PH=10,cv=document.getElementById('c'),x=cv.getContext('2d'),$=id=>document.getElementById(id);
+let b,p1=W/2,p2=W/2,s1=0,s2=0,state='ready',two=false,keys={},last=0;
+function serve(dir){b={x:W/2,y:H/2,vx:(Math.random()-.5)*140,vy:dir*190}}
+function point(){if(s1>=7||s2>=7){state='over';$('msg').textContent=two?(s1>=7?'Bottom player wins!':'Top player wins!'):(s1>=7?'You win!':'CPU wins');$('sm').textContent='Final score '+s1+' : '+s2;$('go').textContent='Play again'}
+else{state='ready';$('msg').textContent=s1+' : '+s2;$('sm').textContent='Tap Serve';$('go').textContent='Serve'}$('ov').style.display='flex'}
+function step(dt){
+if(keys.ArrowLeft)p1-=260*dt;if(keys.ArrowRight)p1+=260*dt;
+if(two){if(keys.a)p2-=260*dt;if(keys.d)p2+=260*dt}else{const d=b.x-p2;if(Math.abs(d)>6)p2+=Math.sign(d)*Math.min(Math.abs(d),175*dt)}
+p1=Math.max(PW/2,Math.min(W-PW/2,p1));p2=Math.max(PW/2,Math.min(W-PW/2,p2));
+b.x+=b.vx*dt;b.y+=b.vy*dt;
+if(b.x<6){b.x=6;b.vx=Math.abs(b.vx)}if(b.x>W-6){b.x=W-6;b.vx=-Math.abs(b.vx)}
+if(b.vy>0&&b.y+6>=H-24&&b.y<H-24+PH+6&&Math.abs(b.x-p1)<PW/2+6){b.y=H-30;b.vy=-Math.min(540,b.vy*1.06);b.vx=Math.max(-380,Math.min(380,b.vx+(b.x-p1)*5))}
+if(b.vy<0&&b.y-6<=14+PH&&b.y>14-6&&Math.abs(b.x-p2)<PW/2+6){b.y=14+PH+6;b.vy=Math.min(540,-b.vy*1.06);b.vx=Math.max(-380,Math.min(380,b.vx+(b.x-p2)*5))}
+if(b.y>H+10){s2++;serve(1);point()}else if(b.y<-10){s1++;serve(-1);point()}}
+function draw(){x.clearRect(0,0,W,H);x.strokeStyle='#2c5a61';x.lineWidth=3;x.setLineDash([10,10]);x.beginPath();x.moveTo(0,H/2);x.lineTo(W,H/2);x.stroke();x.setLineDash([]);
+x.fillStyle='#2c5a61';x.font='bold 56px Georgia';x.textAlign='center';x.fillText(s2,W/2,H/2-30);x.fillText(s1,W/2,H/2+75);
+x.fillStyle='#3fb0a6';x.beginPath();x.roundRect(p2-PW/2,14,PW,PH,5);x.fill();
+x.fillStyle='#f2b84b';x.beginPath();x.roundRect(p1-PW/2,H-24,PW,PH,5);x.fill();
+x.fillStyle='#e9f3ef';x.beginPath();x.arc(b.x,b.y,6,0,7);x.fill()}
+function loop(t){requestAnimationFrame(loop);const dt=Math.min(.033,(t-last)/1000||0);last=t;if(state==='play')step(dt);draw()}
+function pt(e){const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,py=(e.clientY-r.top)/r.height*H;
+if(two){if(py>H/2)p1=px;else p2=px}else p1=px}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();pt(e)});cv.addEventListener('pointermove',pt);
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()==='a'||e.key.toLowerCase()==='d'?e.key.toLowerCase():e.key]=true;if(e.key.startsWith('Arrow'))e.preventDefault()});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()==='a'||e.key.toLowerCase()==='d'?e.key.toLowerCase():e.key]=false});
+$('go').onclick=()=>{if(state==='over'){s1=s2=0;serve(Math.random()<.5?1:-1)}state='play';$('ov').style.display='none'};
+$('mode').onclick=e=>{two=!two;e.target.textContent='Mode: '+(two?'2 players':'vs CPU');s1=s2=0;state='ready';serve(1);$('msg').textContent='Tide Pong';$('sm').textContent=two?'Each player drags on their half. First to 7.':'Drag to move your paddle. First to 7 wins.';$('go').textContent='Start';$('ov').style.display='flex'};
+serve(1);requestAnimationFrame(loop);
+</script>
+</body>
+</html>

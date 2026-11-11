@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drift Puzzle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation}
+main{width:100%;max-width:440px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:58px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+#grid{display:grid;gap:8px;background:var(--board);padding:10px;border-radius:16px;aspect-ratio:1}
+.t{border:0;border-radius:10px;font:700 clamp(22px,9vw,38px) Georgia,serif;color:#06201f;cursor:pointer;padding:0}
+.t.e{background:transparent;cursor:default}
+#st{text-align:center;min-height:28px;margin:14px 0 0;font:700 20px Georgia,serif}
+.row{display:flex;justify-content:center;gap:10px;margin-top:12px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 20px;background:var(--accent);color:#2a1c00;cursor:pointer}
+button.alt{background:var(--board);color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Drift Puzzle</h1><div class="scores"><div class="sc"><small>Moves</small><b id="moves">0</b></div><div class="sc"><small>Best</small><b id="best">-</b></div></div></header>
+<div id="grid"></div>
+<div id="st" aria-live="polite">Put the tiles in order</div>
+<div class="row"><button class="go" id="again">Shuffle</button><button class="go alt" id="size">Size: 3×3</button></div>
+</main>
+<script>
+const $=id=>document.getElementById(id),grid=$('grid');
+let n=3,t,moves,done,bests={};
+try{bests=JSON.parse(localStorage.getItem('drift-puzzle-best')||'{}')}catch(e){}
+function color(v){return 'hsl('+(170-v*(140/(n*n)))+',55%,'+(62+(v%3)*4)+'%)'}
+function show(){$('moves').textContent=moves;$('best').textContent=bests[n]||'-'}
+function render(){grid.style.gridTemplateColumns='repeat('+n+',1fr)';grid.innerHTML='';
+t.forEach((v,i)=>{const b=document.createElement('button');b.className='t'+(v?'':' e');if(v){b.textContent=v;b.style.background=color(v);b.setAttribute('aria-label','Tile '+v)}else{b.setAttribute('aria-hidden','true');b.tabIndex=-1}
+b.onclick=()=>tap(i);grid.appendChild(b)})}
+function nbrs(e){const r=e/n|0,c=e%n,o=[];if(r>0)o.push(e-n);if(r<n-1)o.push(e+n);if(c>0)o.push(e-1);if(c<n-1)o.push(e+1);return o}
+function start(){t=[...Array(n*n).keys()].map(i=>(i+1)%(n*n));let e=n*n-1,prev=-1;
+for(let k=0;k<n*n*30;k++){const o=nbrs(e).filter(x=>x!==prev),m=o[Math.random()*o.length|0];[t[e],t[m]]=[t[m],t[e]];prev=e;e=m}
+if(solved())return start();moves=0;done=false;$('st').textContent='Put the tiles in order';show();render()}
+function solved(){return t.every((v,i)=>v===(i+1)%(n*n))}
+function tap(i){if(done||!t[i])return;const e=t.indexOf(0),r=i/n|0,c=i%n,er=e/n|0,ec=e%n;
+if(r!==er&&c!==ec)return;
+if(r===er){const step=c<ec?1:-1;for(let k=ec;k!==c;k-=step)t[er*n+k]=t[er*n+k-step]}
+else{const step=r<er?1:-1;for(let k=er;k!==r;k-=step)t[k*n+c]=t[(k-step)*n+c]}
+t[i]=0;moves++;render();$('moves').textContent=moves;
+if(solved()){done=true;$('st').textContent='Solved in '+moves+' moves!';if(!bests[n]||moves<bests[n]){bests[n]=moves;try{localStorage.setItem('drift-puzzle-best',JSON.stringify(bests))}catch(e){}}show()}}
+$('again').onclick=start;
+$('size').onclick=e=>{n=n===3?4:3;e.target.textContent='Size: '+n+'×'+n;start()};
+start();
+</script>
+</body>
+</html>

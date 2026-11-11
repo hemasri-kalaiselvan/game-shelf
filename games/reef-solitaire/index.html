@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reef Solitaire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation}
+main{width:100%;max-width:480px;padding:14px 8px 24px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:8px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
+h1{font:700 26px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:64px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+#board{position:relative;width:100%;background:var(--board);border-radius:14px}
+.slot,.card{position:absolute;border-radius:6px}
+.slot{border:2px dashed #2c6a6a;display:flex;align-items:center;justify-content:center;color:#2c6a6a;font-size:22px}
+.card{background:#e9f3ef;color:#10262a;font-weight:700;padding:3px 4px;line-height:1;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.card.red{color:#c8453a}
+.card.back{background:repeating-linear-gradient(45deg,#3fb0a6,#3fb0a6 5px,#2c8f87 5px,#2c8f87 10px)}
+.card.sel{outline:3px solid #f2b84b;z-index:50}
+#st{text-align:center;min-height:26px;margin:10px 0 0;font:700 18px Georgia,serif}
+.row{display:flex;justify-content:center;margin-top:8px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:10px 20px;background:var(--accent);color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Reef Solitaire</h1><div class="sc"><small>Moves</small><b id="mv">0</b></div></header>
+<div id="board"></div>
+<div id="st" aria-live="polite">Tap a card, then tap where it goes. Tap it again to send it up.</div>
+<div class="row"><button class="go" id="again">New deal</button></div>
+</main>
+<script>
+const $=id=>document.getElementById(id),bd=$('board');
+const SU=['♠','♥','♦','♣'],RK=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+let stock,waste,found,tab,sel,moves;
+const red=c=>c.s===1||c.s===2;
+function deal(){const d=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)d.push({s,r,up:false});
+for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
+tab=[];for(let c=0;c<7;c++){const col=d.splice(0,c+1);col[c].up=true;tab.push(col)}
+stock=d;waste=[];found=[[],[],[],[]];sel=null;moves=0;$('st').textContent='Tap a card, then tap where it goes. Tap it again to send it up.';render()}
+const cards=()=>!sel?[]:sel.t==='w'?[waste[waste.length-1]]:tab[sel.c].slice(sel.i);
+function take(){if(sel.t==='w')waste.pop();else{const c=sel.c;tab[c].splice(sel.i);const l=tab[c][tab[c].length-1];if(l&&!l.up)l.up=true}}
+function toTab(c){const cs=cards();if(!cs.length||(sel.t==='t'&&sel.c===c))return false;const top=tab[c][tab[c].length-1];
+const ok=top?(top.up&&red(top)!==red(cs[0])&&top.r===cs[0].r+1):cs[0].r===13;if(!ok)return false;take();tab[c].push(...cs);moves++;return true}
+function toFound(){const cs=cards();if(cs.length!==1)return false;const c=cs[0];if(found[c.s].length!==c.r-1)return false;take();found[c.s].push(c);moves++;return true}
+function tap(z){
+if(z==='stock'){sel=null;if(stock.length){const c=stock.pop();c.up=true;waste.push(c)}else{stock=waste.reverse().map(c=>({s:c.s,r:c.r,up:false}));waste=[]}moves++}
+else if(z==='waste'){if(!waste.length)return;if(sel&&sel.t==='w'){toFound();sel=null}else sel={t:'w'}}
+else if(z[0]==='f'){if(sel){toFound();sel=null}}
+else if(z[0]==='e'){if(sel){toTab(+z.slice(1));sel=null}}
+else if(z[0]==='c'){const [c,i]=z.slice(1).split('_').map(Number),card=tab[c][i];
+if(!card.up){if(i===tab[c].length-1){card.up=true;moves++}sel=null}
+else if(sel){if(sel.t==='t'&&sel.c===c&&sel.i===i){toFound();sel=null}else if(toTab(c))sel=null;else sel={t:'t',c,i}}
+else sel={t:'t',c,i}}
+render();if(found.every(f=>f.length===13))$('st').textContent='You won in '+moves+' moves!'}
+function render(){
+const W=bd.clientWidth,g=4,cw=(W-g*8)/7,ch=cw*1.4,fu=ch*.3,fd=ch*.12,X=k=>g+k*(cw+g),y0=ch+g*3;let h=[],H=y0+ch;
+const pos=`width:${cw}px;height:${ch}px;`;
+const cardH=(c,x,y,z,s)=>`<div class="card ${c.up?(red(c)?'red':''):'back'}${s?' sel':''}" data-z="${z}" style="left:${x}px;top:${y}px;${pos}font-size:${cw*.32}px">${c.up?RK[c.r]+SU[c.s]:''}</div>`;
+const slotH=(x,y,z,t)=>`<div class="slot" data-z="${z}" style="left:${x}px;top:${y}px;${pos}">${t}</div>`;
+h.push(stock.length?cardH({up:false},X(0),g,'stock',false):slotH(X(0),g,'stock','⟲'));
+if(waste.length)h.push(cardH(waste[waste.length-1],X(1),g,'waste',sel&&sel.t==='w'));else h.push(slotH(X(1),g,'waste',''));
+for(let s=0;s<4;s++){const f=found[s];h.push(f.length?cardH(f[f.length-1],X(3+s),g,'f'+s,false):slotH(X(3+s),g,'f'+s,SU[s]))}
+tab.forEach((col,c)=>{if(!col.length)h.push(slotH(X(c),y0,'e'+c,''));let y=y0;
+col.forEach((cd,i)=>{h.push(cardH(cd,X(c),y,'c'+c+'_'+i,sel&&sel.t==='t'&&sel.c===c&&i>=sel.i));y+=cd.up?fu:fd});H=Math.max(H,y+ch-(col.length?fu:0))});
+bd.style.height=(H+g*2)+'px';bd.innerHTML=h.join('');$('mv').textContent=moves}
+bd.addEventListener('pointerdown',e=>{const z=e.target.dataset&&e.target.dataset.z;if(z){e.preventDefault();tap(z)}});
+addEventListener('resize',()=>render());
+$('again').onclick=deal;
+deal();
+</script>
+</body>
+</html>

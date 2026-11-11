@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ocean Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e2a2f;--board:#173c42;--ink:#e9f3ef;--mute:#8fb3ae;--accent:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:440px;padding:20px 16px 28px}
+.back{display:inline-block;color:var(--mute);text-decoration:none;font-size:14px;margin-bottom:12px}
+.back:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+h1{font:700 28px/1 Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.5px}
+.scores{display:flex;gap:8px}
+.sc{background:var(--board);border-radius:10px;padding:6px 12px;text-align:center;min-width:58px}
+.sc small{display:block;color:var(--mute);font-size:11px}
+.sc b{font-size:18px}
+.bar{height:6px;background:var(--board);border-radius:3px;margin-bottom:18px;overflow:hidden}
+#fill{height:100%;width:0;background:#3fb0a6;transition:width .25s}
+#q{font:700 22px/1.3 Georgia,serif;margin:0 0 18px;min-height:90px}
+#opts{display:flex;flex-direction:column;gap:10px}
+.o{border:0;border-radius:12px;background:var(--board);color:var(--ink);font:600 17px "Trebuchet MS",sans-serif;padding:14px 16px;text-align:left;cursor:pointer}
+.o.good{background:#3fb0a6;color:#06201f}
+.o.bad{background:#d95d52;color:#fff}
+.o:disabled{cursor:default}
+#end{text-align:center;display:none}
+#end h2{font:700 30px Georgia,serif;margin:20px 0 8px}
+#end p{color:var(--mute);margin:0 0 20px}
+.row{display:flex;justify-content:center;margin-top:18px;min-height:46px}
+button.go{font:600 16px "Trebuchet MS",sans-serif;border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:#2a1c00;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#fill{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">‹ All games</a>
+<header><h1>Ocean Quiz</h1><div class="scores"><div class="sc"><small>Score</small><b id="score">0</b></div><div class="sc"><small>Best</small><b id="best">0</b></div></div></header>
+<div id="play"><div class="bar"><div id="fill"></div></div><p id="q"></p><div id="opts"></div><div class="row"><button class="go" id="next" style="display:none">Next</button></div></div>
+<div id="end"><h2 id="eh"></h2><p id="ep"></p><button class="go" id="again">Play again</button></div>
+</main>
+<script>
+const Q=[
+["Which is the largest ocean?","Pacific","Atlantic","Indian","Arctic"],
+["What is the largest animal on Earth?","Blue whale","Elephant","Whale shark","Giant squid"],
+["How many hearts does an octopus have?","3","1","2","8"],
+["What mainly causes ocean tides?","The Moon's gravity","Wind","Earth's rotation alone","Ocean currents"],
+["About how much of Earth's surface is covered by water?","71%","50%","90%","33%"],
+["Where is the deepest known point in the ocean?","Mariana Trench","Puerto Rico Trench","Java Trench","Tonga Trench"],
+["Which of these is a mammal?","Dolphin","Shark","Seahorse","Octopus"],
+["What is another name for a starfish?","Sea star","Sea urchin","Sea cucumber","Sand dollar"],
+["Which is the smallest ocean?","Arctic","Indian","Southern","Atlantic"],
+["How many arms does an octopus have?","8","6","10","4"],
+["What is a group of fish called?","School","Pack","Herd","Flock"],
+["Which sea creature has no brain?","Jellyfish","Octopus","Dolphin","Crab"],
+["Which seahorse parent carries the babies?","The male","The female","Both take turns","Neither"],
+["Which gas do ocean phytoplankton release?","Oxygen","Methane","Helium","Nitrogen"],
+["What is the largest fish in the world?","Whale shark","Great white shark","Blue whale","Manta ray"]];
+const $=id=>document.getElementById(id);
+let qs,i,score,best=0,locked;
+try{best=+localStorage.getItem('ocean-quiz-best')||0}catch(e){}
+$('best').textContent=best;
+function shuf(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.random()*(k+1)|0;[a[k],a[j]]=[a[j],a[k]]}return a}
+function start(){qs=shuf(Q).slice(0,10);i=0;score=0;$('score').textContent=0;$('end').style.display='none';$('play').style.display='block';show()}
+function show(){locked=false;const q=qs[i];$('fill').style.width=(i/10*100)+'%';$('q').textContent=(i+1)+'/10  '+q[0];$('next').style.display='none';
+const o=$('opts');o.innerHTML='';shuf(q.slice(1)).forEach(t=>{const b=document.createElement('button');b.className='o';b.textContent=t;b.onclick=()=>pick(b,t);o.appendChild(b)})}
+function pick(b,t){if(locked)return;locked=true;const right=qs[i][1];
+[...$('opts').children].forEach(x=>{x.disabled=true;if(x.textContent===right)x.classList.add('good')});
+if(t===right){score++;$('score').textContent=score}else b.classList.add('bad');
+$('next').textContent=i===9?'See result':'Next';$('next').style.display='inline-block'}
+$('next').onclick=()=>{i++;if(i<10)show();else finish()};
+function finish(){$('play').style.display='none';$('end').style.display='block';
+if(score>best){best=score;try{localStorage.setItem('ocean-quiz-best',best)}catch(e){}$('best').textContent=best}
+$('eh').textContent=score+' / 10';$('ep').textContent=score>=9?'Ocean expert!':score>=6?'Nice dive!':'Keep exploring the deep.'}
+$('again').onclick=start;
+start();
+</script>
+</body>
+</html>

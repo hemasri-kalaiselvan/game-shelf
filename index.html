@@ -33,6 +33,25 @@ a.card:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 // ADD NEW GAMES HERE: one line per game. Put the game in games/<folder>/index.html
 const GAMES=[
  {title:"Tidepool Merge",desc:"Slide and merge tiles up to 2048.",folder:"tidepool-merge",icon:"🌊",color:"#3fb0a6"},
+ {title:"Reef Snake",desc:"Steer, eat, grow. Don't crash.",folder:"reef-snake",icon:"🐍",color:"#f2b84b"},
+ {title:"Shell Match",desc:"Flip cards and find the pairs.",folder:"shell-match",icon:"🐚",color:"#e57a3a"},
+ {title:"Bubble Pop",desc:"Pop bubbles fast. 30 seconds.",folder:"bubble-pop",icon:"🫧",color:"#8fd6bf"},
+ {title:"Tide Tac Toe",desc:"Beat the computer. Easy or hard.",folder:"tide-tac-toe",icon:"❌",color:"#d95d52"},
+ {title:"Word Reef",desc:"Guess the 5-letter word in 6 tries.",folder:"word-reef",icon:"🔤",color:"#c0407a"},
+ {title:"Fin Flap",desc:"Tap to swim through the coral gaps.",folder:"fin-flap",icon:"🐟",color:"#ee9a3c"},
+ {title:"Urchin Sweep",desc:"Minesweeper. Find the safe tiles.",folder:"urchin-sweep",icon:"🦔",color:"#5ec4ae"},
+ {title:"Drop Four",desc:"Connect four. CPU or 2 players.",folder:"drop-four",icon:"🔴",color:"#e57a3a"},
+ {title:"Echo Pearls",desc:"Watch the pattern, then repeat it.",folder:"echo-pearls",icon:"🔔",color:"#8fd6bf"},
+ {title:"Drift Puzzle",desc:"Slide tiles into order. 3x3 or 4x4.",folder:"drift-puzzle",icon:"🧩",color:"#f6d58a"},
+ {title:"Ocean Quiz",desc:"10 questions about the sea.",folder:"ocean-quiz",icon:"🐋",color:"#3fb0a6"},
+ {title:"Crab Whack",desc:"Whack the crabs, spare the jellyfish.",folder:"crab-whack",icon:"🦀",color:"#d95d52"},
+ {title:"Sea Hangman",desc:"Guess the sea word letter by letter.",folder:"sea-hangman",icon:"⚓",color:"#8fb3ae"},
+ {title:"Reef Sudoku",desc:"Classic 9x9 with unique puzzles.",folder:"reef-sudoku",icon:"🔢",color:"#8fd6bf"},
+ {title:"Dots and Boxes",desc:"2 players. Close boxes, win turns.",folder:"dots-and-boxes",icon:"⬜",color:"#f2b84b"},
+ {title:"Reef Maze",desc:"Slide through mazes that keep growing.",folder:"reef-maze",icon:"🌀",color:"#3fb0a6"},
+ {title:"Reef Solitaire",desc:"Klondike. Tap a card, tap a spot.",folder:"reef-solitaire",icon:"🃏",color:"#c0407a"},
+ {title:"Fleet Battle",desc:"2-player Battleship, one phone.",folder:"fleet-battle",icon:"🚢",color:"#5ec4ae"},
+ {title:"Tide Pong",desc:"Pong. vs CPU or 2 players.",folder:"tide-pong",icon:"🏓",color:"#f2b84b"},
 ];
 const list=document.getElementById('list');
 GAMES.forEach(g=>{const a=document.createElement('a');a.className='card';a.href='games/'+g.folder+'/';a.style.setProperty('--c',g.color||'#f2b84b');
